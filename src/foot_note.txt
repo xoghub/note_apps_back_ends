@@ -1,2 +1,70 @@
 aplikasi font-end :
 notesapp-v1.dicodingacademy.com
+
+
+step by step bab deploy web service :
+sub bab : membuat dan menjalankan amazon 
+1. Untuk membuat EC2 : All Services -> Compute -> EC2. 
+2. Launch Instance
+3. pilih AMI dengan konfigurasi Ubuntu LTS terbaru 64bit(x86)
+4. Lanjutkan konfigurasi secara default
+5. tambahkan Tags dengan key "name" dan value "web server"
+6. klik configure security group 
+7. tambahkan rule (Add rule) dengan tipe custom TCP port range 5000 dengan source Anywhere
+8. ubah nama security group menjadi app-server-sg
+9. review and Launch
+10. setelah selesai Sekarang sebuah pop-up muncul. Pop-up ini menjelaskan bahwa untuk mengakses instance melalui SSH secara aman, dibutuhkan sebuah key pair. Karena tak memiliki key pair, jadi pilih saja opsi Create a new key pair, lalu isi nama key pair dengan nilai notes-api-webserver.
+10. Download Key Pair. dan taruh file tersebut kedalam folder proyek
+11. launch Instance.
+
+sub bab: Mengoperasikan EC2 Instance melalui SSH
+1. masuk pada halaman instance dan pilih instance yang baru dibuat 
+2. plih tombol connect dan terdapat halaman connect to instance
+3. esekusi perintah ini pada CMD di foler proyek [$path = ".\notes-api-webserver.pem"
+# Reset to remove explicit permissions
+icacls.exe $path /reset
+# Give current user explicit read-permission
+icacls.exe $path /GRANT:R "$($env:USERNAME):(R)"
+# Disable inheritance and remove inherited permissions
+icacls.exe $path /inheritance:r]
+4. pilih SSH Client dan jalankan perintah pada CMD di folder proyek
+
+sub bab : Mengonfigurasi Kebutuhan pada EC2 Instances
+1. akses EC2 instance menggunakan SSH DI cmd
+2. setelah itu jalankan perintah git --version
+3. masuk halaman remote repository pada browser dan klik tombol code
+4. salin HTTPS URL remote repository dengan tombol clipboard
+5. jalankan perintah git clone <remote repository URL>
+6. pastikan proyek tersimpan pada EC2 instance dengan perintah Is 
+7. masuk ke folder proyek dengan perintah cd <nama proyek>
+8. ulangi no.6
+
+sub bab : memasang Node.js dan Menjalankan Web Server di EC2 Instance
+1. sinkronisasikan version node js pada komputer dengan EC2 
+2. pasang nvm pada ubuntu : [curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash] note: keluar terlebih dahulu dari SSH dengan perintah exit dan akses kembali EC2.
+3. pasang node.js dengan perintah nvm install <versi nodejs> setelah terpasang lalukan pengecekan dengan node -v
+4. pasang  seluruh package dependenciens dengan perintah npm install
+5. lalu jalankan npm run start
+
+sub bab : Memperbaiki Bugs
+1. ubah nilai property host menjadi [process.env.NODE_ENV !== 'production' ? 'localhost' : '0.0.0.0',]
+2. buka package.json dan atur npm runner menjadi ["start-prod": "NODE_ENV=production node ./src/server.js",
+  "start-dev": "nodemon ./src/server.js",]
+3. simpan perubahan kemudian commit seluruh perubahan yang ada [
+    git add .
+git commit -m "fix bugs host value"
+]
+4. kemudian push perubhannya pada remote repository [git push origin master 
+]
+5. akses EC2 instance malalui SSH dan masuk ke folder proyek
+6. update perubahan dengan perintah [git pull origin master]
+7. jalankan kembali servernya dengan perintah npm run start-prod
+
+sub bab : process manager 
+hubungkan aplikasi client [http://ec2-13-212-153-62.ap-southeast-1.compute.amazonaws.com:8000/] dengan URL server terbaru
+untuk membuat proses mengulang server setiap kali membutuhkannya oleh karena itu diperlukannya Process Manager dapat menangani permasalahan tersebut.
+1. akses kembali EC2 dengan SSH dan pasang pm2 dengan [npm install -g pm2]
+2. masuk directory notes-app-back-end dan jalankan [pm2 start npm --name "notes-api" -- run "start-prod" ]
+3. merestart secara manual : [pm2 restart notes-api]
+4. menghentikan prosesnya : [pm2 stop notes-api]
+5. menjalankan kembali proses : [pm2 start notes-api]
